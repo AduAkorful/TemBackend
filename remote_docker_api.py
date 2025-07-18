@@ -47,7 +47,7 @@ def trigger_docker_test(filename: str, contract_type: str) -> str:
     return f"✅ Test triggered:\n{response.text}"
 
 
-def fetch_from_remote_container(report_filename: str, contract_type: str, timeout: int = 60) -> str:
+def fetch_from_remote_container(report_filename: str, contract_type: str, timeout: int = 300) -> str:
     """
     Polls the appropriate Docker container for a specific contract report file.
     Extracts and returns the .md report from the tarball when it's ready.
