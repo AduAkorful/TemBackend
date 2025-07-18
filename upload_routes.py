@@ -88,6 +88,58 @@ async def upload_non_evm_contract(contract_file: UploadFile = File(...)):
     })
 
 
+
+@router.post("/upload-non-evm-algorand")
+async def upload_algorand_contract(contract_file: UploadFile = File(...)):
+    validate_extension(contract_file.filename, ALLOWED_NON_EVM_EXTENSIONS)
+
+    contents = await contract_file.read()
+    upload_to_remote_container_memory(contents, contract_file.filename, "non-evm")
+
+    logs = trigger_docker_test(contract_file.filename, "non-evm")
+
+    base_name = Path(contract_file.filename).stem.strip()
+    report_filename = f"{base_name}-report.md"
+
+    aggregated_content = fetch_from_remote_container(report_filename, "non-evm")
+
+    #result = process_algorand_contract(contents, contract_file.filename)
+
+    return JSONResponse(content={
+        "message": "Algorand contract processed",
+        "filename": contract_file.filename,
+        "docker_logs": logs,
+        "aggregated_report": aggregated_content,
+        #"details": result
+    })
+
+
+@router.post("/upload-non-evm-starknet")
+async def upload_starknet_contract(contract_file: UploadFile = File(...)):
+    validate_extension(contract_file.filename, ALLOWED_NON_EVM_EXTENSIONS)
+
+    contents = await contract_file.read()
+    upload_to_remote_container_memory(contents, contract_file.filename, "non-evm")
+
+    logs = trigger_docker_test(contract_file.filename, "non-evm")
+
+    base_name = Path(contract_file.filename).stem.strip()
+    report_filename = f"{base_name}-report.md"
+
+    aggregated_content = fetch_from_remote_container(report_filename, "non-evm")
+
+   # result = process_starknet_contract(contents, contract_file.filename)
+
+    return JSONResponse(content={
+        "message": "Starknet contract processed",
+        "filename": contract_file.filename,
+        "docker_logs": logs,
+        "aggregated_report": aggregated_content,
+        #"details": result
+    })
+
+
+
 # Results for EVM
 @router.get("/results/{filename}")
 async def get_test_results(filename: str):
@@ -105,7 +157,7 @@ async def get_test_results(filename: str):
 # Results for Non-EVM
 @router.get("/results/non-evm/{filename}")
 async def get_non_evm_test_results(filename: str):
-    base = Path(filename).stem.strip().lower()
+    base = Path(filename).stem.strip()
     report_filename = f"{base}-report.md"
 
     aggregated = fetch_from_remote_container(report_filename, "non-evm")
