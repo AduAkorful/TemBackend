@@ -49,20 +49,29 @@ def trigger_docker_test(filename: str, contract_type: str) -> str:
 
 def fetch_from_remote_container(report_filename: str, contract_type: str, timeout: int = 60) -> str:
     """
-    Polls the Docker container for a specific contract report file.
+    Polls the appropriate Docker container for a specific contract report file.
     Extracts and returns the .md report from the tarball when it's ready.
     """
-    
-    print(f"🧭 Looking for report in container type: {contract_type}")
 
-    container = "evm-container" if contract_type == "evm" else "non-evm-container"
+    # Mapping contract types to their respective container names
+    container_map = {
+        "evm": "evm-container",
+        "non-evm": "non-evm-container",
+        "non-evm-algorand": "non-evm-algorand",
+        "non-evm-starknet": "non-evm-starknet"
+    }
+
+    container = container_map.get(contract_type)
+    if not container:
+        return f"❌ Unknown contract type '{contract_type}'"
+
     url = (
         f"https://dockerapi.smarttesthub.live"
         f"/containers/{container}/archive"
         f"?path=/app/logs/reports/{report_filename}"
     )
 
-    print(f"🔍 Polling for /logs/reports/{report_filename} in {container}…")
+    print(f"🧭 Looking for report in container type: {contract_type}")
     print(f"🌐 Full Docker API polling URL: {url}")
 
     for second in range(timeout):
