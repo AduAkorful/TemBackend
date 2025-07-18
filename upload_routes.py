@@ -11,7 +11,7 @@ from remote_docker_api import (
 router = APIRouter()
 
 ALLOWED_EVM_EXTENSIONS = {".sol", ".txt"}
-ALLOWED_NON_EVM_EXTENSIONS = {".rs", ".wasm"}
+ALLOWED_NON_EVM_EXTENSIONS = {".rs", ".wasm", ".py", ".cairo"}
 
 
 def validate_extension(filename: str, allowed_extensions: set):
@@ -45,7 +45,7 @@ async def upload_evm_contract(contract_file: UploadFile = File(...)):
     logs = trigger_docker_test(contract_file.filename, "evm")
 
     # Dynamically generate report filename from contract name
-    base_name = Path(contract_file.filename).stem.strip().lower()
+    base_name = Path(contract_file.filename).stem.strip()
     report_filename = f"{base_name}-report.md"
 
     # Fetch the specific report
@@ -72,7 +72,7 @@ async def upload_non_evm_contract(contract_file: UploadFile = File(...)):
 
     logs = trigger_docker_test(contract_file.filename, "non-evm")
 
-    base_name = Path(contract_file.filename).stem.strip().lower()
+    base_name = Path(contract_file.filename).stem.strip()
     report_filename = f"{base_name}-report.md"
 
     aggregated_content = fetch_from_remote_container(report_filename, "non-evm")
@@ -114,6 +114,33 @@ async def get_non_evm_test_results(filename: str):
         content={"filename": filename, "aggregated_report": aggregated},
         headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"}
     )
+
+
+@router.get("/results/non-evm-algorand/{filename}")
+async def get_algorand_test_results(filename: str):
+    base = Path(filename).stem.strip()
+    report_filename = f"{base}-report.md"
+
+    aggregated = fetch_from_remote_container(report_filename, "non-evm-algorand")
+
+    return JSONResponse(
+        content={"filename": filename, "aggregated_report": aggregated},
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"}
+    )
+
+
+@router.get("/results/non-evm-starknet/{filename}")
+async def get_starknet_test_results(filename: str):
+    base = Path(filename).stem.strip()
+    report_filename = f"{base}-report.md"
+
+    aggregated = fetch_from_remote_container(report_filename, "non-evm-starknet")
+
+    return JSONResponse(
+        content={"filename": filename, "aggregated_report": aggregated},
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"}
+    )
+
 
 
 # Dummy processors
